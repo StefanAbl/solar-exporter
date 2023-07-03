@@ -15,7 +15,7 @@ var (
 
 	url  = os.Getenv("URL")
 	user = os.Getenv("USER")
-	pw   = os.Getenv("PW")
+	pw   = os.Getenv("PASS")
 )
 
 func main() {

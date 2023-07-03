@@ -47,6 +47,9 @@ func (s *Collector) Collect(metrics chan<- prometheus.Metric) {
 func extractPower(response string) float64 {
 	var re = regexp.MustCompile(`var webdata_now_p = "(\d{1,3})"`)
 	matches := re.FindStringSubmatch(response)
+	if len(matches) == 0 {
+		log.Fatalf("Could not finde value for power. Response was: \n %s", response)
+	}
 	fmt.Printf("%s", matches[1])
 	power, err := strconv.Atoi(matches[1])
 	if err != nil {
