@@ -26,6 +26,7 @@ func TestExporter(t *testing.T) {
 	testListAddress := "localhost:23456"
 	testServer := createServer(&testListAddress, "http://localhost:12345/", "", "")
 	go testServer.ListenAndServe()
+	time.Sleep(time.Nanosecond * 500)
 
 	resp, err := http.Get("http://" + testListAddress + "/metrics")
 	if err != nil {
