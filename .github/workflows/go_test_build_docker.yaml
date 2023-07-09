@@ -1,18 +1,31 @@
-name: Create and publish a Docker image
+name: Run Go Tests and Publish a Docker Image
 
 on:
   push:
-    branches: ['main', 'master']
-    tags:
-      - 'v*'
-
-
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+      - name: Install Dependencies
+        run: go mod download
+      - name: Build
+        run: go build -v ./...
+      - name: Test
+        run: go test -v ./...
+
   build-and-push-image:
+    needs: test
+    if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
