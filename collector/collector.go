@@ -75,7 +75,7 @@ func extractValue(response string, regex string) float64 {
 
 func (s Collector) call(path string, method string) ([]byte, error) {
 	client := &http.Client{
-		Timeout: time.Second,
+		Timeout: time.Second * 10,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
