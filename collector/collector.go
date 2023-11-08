@@ -19,9 +19,9 @@ type Collector struct {
 }
 
 var (
-	regexPower      = `var webdata_now_p = "(\d{1,4})"`
-	regexYieldToday = `var webdata_today_e = "([\d.]{1,5})"`
-	regexYieldTotal = `var webdata_total_e = "([\d.]{1,5})"`
+	regexPower      = `var webdata_now_p = "(\d{1,4}|)"`
+	regexYieldToday = `var webdata_today_e = "([\d.]{1,5}|)"`
+	regexYieldTotal = `var webdata_total_e = "([\d.]{1,5}|)"`
 	power           = prometheus.NewDesc(
 		"solar_power_watt", "The current power in watts", nil, nil,
 	)
@@ -65,8 +65,13 @@ func extractValue(response string, regex string) float64 {
 	if len(matches) == 0 {
 		log.Fatalf("Could not finde value. Response was: \n %s", response)
 	}
-	//fmt.Printf("%s", matches[1])
-	value, err := strconv.ParseFloat(matches[1], 64)
+	var value float64
+	var err error
+	if matches[1] == "" {
+		value = 0.0
+	} else {
+		value, err = strconv.ParseFloat(matches[1], 64)
+	}
 	if err != nil {
 		log.Fatal(err)
 	}
