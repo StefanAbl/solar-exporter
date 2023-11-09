@@ -2,6 +2,7 @@ package collector
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"io/ioutil"
@@ -46,24 +47,42 @@ func (s *Collector) Describe(ch chan<- *prometheus.Desc) {
 func (s *Collector) Collect(metrics chan<- prometheus.Metric) {
 	response, err := s.call("status.html", "GET")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
-	metrics <- prometheus.MustNewConstMetric(
-		power, prometheus.GaugeValue, extractValue(string(response), regexPower),
-	)
-	metrics <- prometheus.MustNewConstMetric(
-		yieldToday, prometheus.CounterValue, extractValue(string(response), regexYieldToday),
-	)
-	metrics <- prometheus.MustNewConstMetric(
-		yieldTotal, prometheus.CounterValue, extractValue(string(response), regexYieldTotal),
-	)
+	if response != nil {
+		if p, err := extractValue(string(response), regexPower); err == nil {
+			metrics <- prometheus.MustNewConstMetric(
+				power, prometheus.GaugeValue, p,
+			)
+		} else {
+			log.Println(err)
+		}
+		if yDay, err := extractValue(string(response), regexYieldToday); err == nil {
+			metrics <- prometheus.MustNewConstMetric(
+				yieldToday, prometheus.CounterValue, yDay,
+			)
+		} else {
+			log.Println(err)
+		}
+		if yTotal, err := extractValue(string(response), regexYieldTotal); err == nil {
+			metrics <- prometheus.MustNewConstMetric(
+				yieldTotal, prometheus.CounterValue, yTotal,
+			)
+		} else {
+			log.Println(err)
+		}
+	}
 }
 
-func extractValue(response string, regex string) float64 {
+func extractValue(response string, regex string) (float64, error) {
 	var re = regexp.MustCompile(regex)
 	matches := re.FindStringSubmatch(response)
 	if len(matches) == 0 {
-		log.Fatalf("Could not finde value. Response was: \n %s", response)
+		return 0.0, errors.New(
+			fmt.Sprintf(
+				"Could not finde value for regex %s. Response was: \n %s \n", regex, response,
+			),
+		)
 	}
 	var value float64
 	var err error
@@ -73,9 +92,9 @@ func extractValue(response string, regex string) float64 {
 		value, err = strconv.ParseFloat(matches[1], 64)
 	}
 	if err != nil {
-		log.Fatal(err)
+		return 0, err
 	}
-	return value
+	return value, nil
 }
 
 func (s Collector) call(path string, method string) ([]byte, error) {
